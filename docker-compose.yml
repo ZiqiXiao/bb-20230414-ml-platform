@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  app:
+    container_name: ml-platform
+    image: ziqix/ml-platform:0.1.0
+    ports:
+      - 3030:3030
+    volumes:
+      - ./data:/app/data
+    environment:
+      - SQLALCHEMY_DATABASE_URI=sqlite:////app/data/app.db
+      - FLASK_APP=ml.py
+      - TZ=Asia/Shanghai

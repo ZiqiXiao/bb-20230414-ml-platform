@@ -1,0 +1,31 @@
+# 忽略 Git 相关文件和目录
+.git
+.gitignore
+
+# 忽略编译输出和临时文件
+*.pyc
+__pycache__
+*.so
+*.egg-info
+dist
+build
+*.log
+*.pid
+*.sock
+
+# 忽略编辑器配置文件
+.vscode
+.idea
+
+# 忽略本地测试数据和配置文件
+test
+config.yaml
+
+# 忽略文档和示例代码
+doc
+examples
+desc
+test
+*.ipynb
+venv
+docker-build.sh

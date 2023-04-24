@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+
+{% block title %} 模型训练页面 {% endblock %}
+{% block content %}
+    <h1>模型训练页面</h1>
+    <h2>请选择模型、上传文件、选择预测目标</h2>
+    <p id="upload-message"></p>
+    <form id="upload-form" enctype="multipart/form-data">
+        <label for="file">上传csv格式的数据文件:</label>
+        <input type="file" name="file" id="file" accept=".csv">
+        <br>
+        <label>选择模型:</label>
+        <div id="model-class-list">
+            <div>
+                <input type="checkbox" name="modelClass" value="xgboost" id="modelClass-xgboost">
+                <label for="modelClass-xgboost">XGBoost</label>
+                <div class="model-parameters" id="xgboost-parameters" style="display:none;">
+                    <label for="num_boost_round">训练迭代次数:</label>
+                    <input type="number" id="xgboost-num_boost_round" name="num_boost_round" value="">
+                </div>
+            </div>
+            <div>
+                <input type="checkbox" name="modelClass" value="mlp" id="modelClass-mlp">
+                <label for="modelClass-mlp">多层感知机（神经网络）- MLP</label>
+                <div class="model-parameters" id="mlp-parameters" style="display:none;">
+                    <label for="num_epochs">训练迭代次数:</label>
+                    <input type="number" id="mlp-num_epochs" name="num_epochs" value="">
+                </div>
+            </div>
+            <div>
+                <input type="checkbox" name="modelClass" value="svr" id="modelClass-svr">
+                <label for="modelClass-svr">支持向量机 - SVR</label>
+                </div>
+            </div>
+            <div>
+                <input type="checkbox" name="modelClass" value="lr" id="modelClass-lr">
+                <label for="modelClass-lr">线性回归 - LR</label>
+                </div>
+            </div>
+            <div>
+                <input type="checkbox" name="modelClass" value="rf" id="modelClass-rf">
+                <label for="modelClass-rf">随机森林 - RF</label>
+                </div>
+            </div>
+            <!-- Add more models here -->
+        </div>
+        <br>
+        <p id="label-message"></p>
+        <label for="label">预测目标名称（请输入数据文件中正确的预测目标列名称）:</label>
+        <input type="text" name="label" id="label" value="target">
+        <br>
+        <input type="submit" value="开始训练">
+    </form>
+    <script>
+        // 文件上传是否成功
+        $('#file').on('change', function() {
+            var formData = new FormData($('#upload-form')[0]);
+            formData.append('folder', 'train');
+            $.ajax({
+                url: '{{ url_for("upload_file") }}',
+                type: 'POST',
+                data: formData,
+                cache: false,
+                contentType: false,
+                processData: false,
+                success: function(response) {
+                    if (response.status === 'success') {
+                        $('#upload-message').text('上传文件成功').css('color', 'green');
+                        $('#file').data('uploaded-filename', formData.get('file').name);
+                    } else {
+                        $('#upload-message').text('上传文件失败').css('color', 'red');
+                    }
+                }
+            });
+        });
+
+        // 显示模型参数
+        function getModelDefaults() {
+            fetch('{{ url_for("model_params_default") }}')
+                .then(response => response.json())
+                .then(defaults => {
+                    // xgboost
+                    var xgboostDefaults = defaults.xgboost;
+                    var xgboostNumBoostRoundInput = document.getElementById('xgboost-num_boost_round');
+                    xgboostNumBoostRoundInput.value = xgboostDefaults.num_boost_round;
+                    
+                    // mlp
+                    var mlpDefaults = defaults.mlp;
+                    var mlpNumEpochsInput = document.getElementById('mlp-num_epochs');
+                    mlpNumEpochsInput.value = mlpDefaults.num_epochs; 
+                });
+            }
+
+        getModelDefaults();
+
+        document.querySelectorAll('input[name="modelClass"]').forEach(function(input) {
+        input.addEventListener('change', function(event) {
+            var modelParametersDiv = document.getElementById(event.target.value + '-parameters');
+            if (event.target.checked) {
+                modelParametersDiv.style.display = 'block';
+            } else {
+                modelParametersDiv.style.display = 'none';
+            }
+            });
+        });
+
+        // 检查打标数据名称是否存在
+        $('#label').on('input', function() {
+            var filename = $('#file').data('uploaded-filename');
+            var label = $(this).val();
+            if (filename && label) {
+                $.ajax({
+                    url: '{{ url_for("check_label") }}',
+                    type: 'POST',
+                    data: {
+                        'filename': filename,
+                        'label': label
+                    },
+                    success: function(response) {
+                        if (response.status === 'success') {
+                            $('#label-message').text('名称存在于数据集文件中').css('color', 'green');
+                        } else {
+                            $('#label-message').text('名称不存在于数据集文件中').css('color', 'red');
+                        }
+                    }
+                });
+            } else if(label) {
+                $('#label-message').text('请先上传文件').css('color', 'red');
+            } else if (filename) {
+                $('#label-message').text('请填写预测目标名称').css('color', 'red');
+            } else {
+                $('#label-message').text('请先上传文件后再填写预测目标名称').css('color', 'red');
+            }
+        });
+        
+        // 收集模型参数
+        function collectModelParameters() {
+            const modelParameters = {};
+
+            if ($('#modelClass-xgboost').is(':checked')) {
+                modelParameters.xgboost = {
+                    num_boost_round: parseInt($('#xgboost-num_boost_round').val(), 10)
+                };
+            }
+
+            if ($('#modelClass-mlp').is(':checked')) {
+                modelParameters.mlp = {
+                    num_epochs: parseInt($('#mlp-num_epochs').val(), 10)
+                };
+            }
+
+            return modelParameters;
+        }
+
+
+        // 页面最终提交
+        $('#upload-form').on('submit', function(event) {
+                event.preventDefault(); // 阻止默认的表单提交行为
+
+                // 检查文件是否已经上传
+                const uploadedFilename = $('#file').data('uploaded-filename');
+                if (!uploadedFilename) {
+                    alert('Please upload a file before submitting.');
+                    return;
+                }
+
+                // 从表单中获取model_name
+                const modelClass =  $('input[name="modelClass"]:checked').map(function() {
+                    return this.value;
+                }).get().join(',');
+
+                // 从表单中获取label
+                const label = $('#label').val();
+
+                // 收集模型参数
+                const modelParameters = collectModelParameters();
+                console.log(JSON.stringify(modelParameters))
+
+                // 使用$.ajax发送POST请求到/predict-prepare路由
+                $.ajax({
+                    url: '{{ url_for("train_prepare") }}',
+                    type: 'POST',
+                    data: {
+                        filename: uploadedFilename,
+                        modelClass: modelClass,
+                        label: label,
+                        param: JSON.stringify(modelParameters)
+                        
+                    },
+                    success: function(response) {
+                        window.location.href = response.redirect_url;
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        alert('Error: ' + textStatus);
+                    }
+                });
+            });
+
+    </script>
+{% endblock %}

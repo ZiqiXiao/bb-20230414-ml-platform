@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %} 预测准备页面 {% endblock %}
+{% block content %}
+    <h1>预测准备页面</h1>
+    <h2>请先上传文件并选择模型</h2>
+    <p id="upload-message"></p>
+    <form id="upload-form" enctype="multipart/form-data">
+        <label for="file">请上传CSV格式的数据集文件:</label>
+        <input type="file" id="file" name="file" accept=".csv">
+        <br>
+        <label for="model_name">请选择模型:</label>
+        <select id="model_name" name="model_name" style="width: 300px;">
+            {% for name in model_names %}
+                <option value="{{ name.model_name }}">{{ name.model_name }}</option>
+            {% endfor %}
+        </select>
+        <br>
+        <input type="submit" value="开始预测">
+    </form>
+    
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // 初始化Select2
+            const model_name_element = document.getElementById("model_name");
+            $(model_name_element).select2();
+
+
+            // 文件选择事件
+            $('#file').on('change', function() {
+                var formData = new FormData($('#upload-form')[0]);
+                formData.append('folder', 'predict');
+                $.ajax({
+                    url: '/upload-file',
+                    type: 'POST',
+                    data: formData,
+                    cache: false,
+                    contentType: false,
+                    processData: false,
+                    success: function(response) {
+                        if (response.status === 'success') {
+                            $('#upload-message').text('数据集文件上传成功').css('color', 'green');
+                            $('#file').data('uploaded-filename', formData.get('file').name);
+                        } else {
+                            $('#upload-message').text('数据集文件上传失败').css('color', 'red');
+                        }
+                    }
+                });
+            });
+
+            $('#upload-form').on('submit', function(event) {
+                event.preventDefault(); // 阻止默认的表单提交行为
+
+                // 检查文件是否已经上传
+                const uploadedFilename = $('#file').data('uploaded-filename');
+                if (!uploadedFilename) {
+                    alert('请先上传文件');
+                    return;
+                }
+
+                // 从表单中获取model_name
+                const modelName = $('#model_name').val();
+
+                // 使用$.ajax发送POST请求到/predict-prepare路由
+                $.ajax({
+                    url: '/predict-prepare',
+                    type: 'POST',
+                    data: {
+                        filename: uploadedFilename,
+                        model_name: modelName
+                    },
+                    success: function(response) {
+                        window.location.href = response.redirect_url;
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        alert('Error: ' + textStatus);
+                    }
+                });
+            });
+
+        });
+    </script>
+</body>
+</html>
+{% endblock %}

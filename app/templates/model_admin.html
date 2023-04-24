@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}模型管理页面{% endblock %}
+
+{% block content %}
+<h1>模型管理页面</h1>
+
+<table>
+    <tr>
+        <th>模型编号</th>
+        <th>模型名称</th>
+        <th>模型类别</th>
+        <th>模型操作</th>
+        <th>数据模板</th>
+        <th>模板操作</th>
+    </tr>
+    {% for model in model_data %}
+    <tr>
+        <td>{{ model.id }}</td>
+        <td>{{ model.model_name }}</td>
+        <td>{{ model.model_class }}</td>
+        <td>
+            <button onclick="deleteModel('{{ model.id }}')">删除</button>
+            <button onclick="renameModel('{{ model.id }}')">重命名</button>
+        </td>
+        <td>{{ model.template_name }}</td>
+        <td>
+            <button onclick="downloadTemplate('{{ model.id }}')">下载</button>
+    </tr>
+    {% endfor %}
+</table>
+
+<script>
+    function deleteModel(modelId) {
+        if (confirm('Are you sure you want to delete this model?')) {
+            $.post("{{ url_for('delete_model') }}", { model_id: modelId }, function (response) {
+                if (response.status === 'success') {
+                    alert('Model deleted successfully.');
+                    location.reload();
+                } else {
+                    alert('Failed to delete the model.');
+                }
+            });
+        }
+    }
+
+    function renameModel(modelId) {
+        var newName = prompt('Enter the new name for the model:');
+        if (newName) {
+            $.ajax({
+                url: '{{ url_for("rename_model") }}',
+                type: 'POST',
+                data: {
+                    'model_id': modelId,
+                    'new_name': newName
+                },
+                success: function(response) {
+                    if (response.status === 'success') {
+                        alert('Model name updated successfully.');
+                        // 可以在此处添加代码以更新页面上的模型名称
+                        location.reload();
+                    } else {
+                        alert(response.message);
+                    }
+                }
+            });
+        }
+    }
+
+    function downloadTemplate(modelId) {
+        window.location.href = '{{ url_for("download_template") }}?model_id=' + modelId;
+    }
+
+</script>
+{% endblock %}

@@ -1,0 +1,266 @@
+{% extends "base.html" %}
+
+{% block title %}训练中{% endblock %}
+{% block style %}
+<style>
+    .model-container {
+        margin-bottom: 20px;
+        text-align: left;
+    }
+    .model-name {
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+    .progress {
+        height: 20px;
+        background-color: #f2f2f2;
+        position: relative;
+        display: inline-block;
+        width: 50%;
+    }
+    .progress-wrapper {
+        height: 100%;
+        background-color: #007bff;
+        width: 0;
+        position: absolute;
+        top: 0;
+        left: 0;
+        overflow: hidden;
+    }
+    .progress-bar {
+        width: 100%;
+        height: 100%;
+        position: relative;
+    }
+    .progress-percent {
+        color: #000;
+        position: absolute;
+        right: 5px;
+        line-height: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+    <h1>训练过程</h1>
+    <div id="training-progress"></div>
+    <div id="evaluation-table-container"></div>
+    <form id="save-model-form" style="display: none;">
+        <label>请选择一个模型进行存储:</label>
+        <div id="model-select-list"></div>
+        <label for="model-name">模型名称:</label>
+        <input type="text" name="model-name" id="model-name" required>
+        <p id="model-name-message"></p>
+
+        <label for="template-name">数据模板名称:</label>
+        <input type="text" name="template-name" id="template-name" required>
+        <p id="template-name-message"></p>
+        <input type="submit" value="存储模型">
+    </form>
+    <script type="text/javascript">
+        var socket = io();
+        var trainingProgress = document.getElementById('training-progress');
+        var evaluationMetrics = {};
+        const modelNamesChinese = {
+                'lr': '线性回归 - LR',
+                'svr': '支持向量机 - SVR',
+                'rf': '随机森林 - RF',
+                'xgboost': 'XGboost',
+                'mlp': '多层感知机 - MLP'
+            };
+        
+        // 动态创建模型进度条
+        socket.on('start-training', function(data) {
+            var modelContainer = document.createElement('div');
+            modelContainer.classList.add('model-container');
+
+            var modelNameElement = document.createElement('div');
+            var progressElement = document.createElement('div');
+            var progressWrapper = document.createElement('div');
+            var progressBar = document.createElement('div');
+            var progressPercent = document.createElement('div');
+
+            modelNameElement.innerHTML = data.modelName;
+            progressPercent.innerHTML = '0%';
+
+            modelNameElement.classList.add('model-name');
+            progressElement.classList.add('progress');
+            progressWrapper.classList.add('progress-wrapper');
+            progressBar.classList.add('progress-bar');
+            progressPercent.classList.add('progress-percent');
+
+            progressBar.appendChild(progressPercent);
+            progressWrapper.appendChild(progressBar);
+
+            modelContainer.appendChild(modelNameElement);
+            modelContainer.appendChild(progressElement);
+            progressElement.appendChild(progressWrapper);
+            modelContainer.id = 'model-' + data.modelName;
+
+            trainingProgress.appendChild(modelContainer);
+        });
+        
+        // 更新模型进度条
+        socket.on('training_progress', function(data) {
+            var modelContainer = document.querySelector('#model-' + data.modelName);
+            var progressWrapper = modelContainer.querySelector('.progress-wrapper');
+            
+            progressWrapper.style.width = data.progress + '%';
+            progressWrapper.querySelector('.progress-percent').innerHTML = data.progress + '%';
+        });
+
+        // 启动训练
+        socket.emit('start-training', {
+            filename: "{{filename}}",
+            modelClass: "{{modelClass}}",
+            label: "{{label}}",
+            param: "{{param}}"
+        });
+        
+        // 更次模型评估结果
+        socket.on('model_evaluation', function(data) {
+            evaluationMetrics[data.modelName] = data.metrics;
+        });
+        
+        // 显示模型评估结果
+        socket.on('training-finished', function() {
+            showEvaluationTable();
+            // 显示保存模型表单
+            $('#save-model-form').show();
+
+            // 获取所有已训练的模型
+            var modelOptions = '';
+            for (var modelName in evaluationMetrics) {
+                var modelNameChinese = modelNamesChinese[modelName]
+                modelOptions += `<input type="radio" name="selected-model" value="${modelName}" id="model-${modelName}" required><label for="model-${modelName}">${modelNameChinese}</label><br>`;
+            }
+
+            // 更新单选框选项
+            $('#model-select-list').html(modelOptions);
+        });
+        
+
+        $('#model-name').on('input', function() {
+            var modelName = $(this).val();
+            if (modelName) {
+                $.ajax({
+                    url: '{{ url_for("check_name") }}',
+                    type: 'POST',
+                    data: {
+                        'modelName': modelName,
+                        'templateName': ''
+                    },
+                    success: function(response) {
+                        if (response.status === 'success') {
+                            $('#model-name-message').text('名称可使用').css('color', 'green');
+                        } else {
+                            $('#model-name-message').text('名称已存在，请尝试别的名称').css('color', 'red');
+                        }
+                    }
+                });
+            }
+        });
+
+        $('#template-name').on('input', function() {
+            var templateName = $(this).val();
+            if (templateName) {
+                $.ajax({
+                    url: '{{ url_for("check_name") }}',
+                    type: 'POST',
+                    data: {
+                        'modelName': '',
+                        'templateName': templateName
+                    },
+                    success: function(response) {
+                        if (response.status === 'success') {
+                            $('#template-name-message').text('名称可使用').css('color', 'green');
+                        } else {
+                            $('#template-name-message').text('名称已存在，请尝试别的名称').css('color', 'red');
+                        }
+                    }
+                });
+            }
+        });
+
+        $('#save-model-form').on('submit', function(event) {
+            event.preventDefault();
+
+            // 获取选择的模型和自定义名称
+            var selectedModel = $('input[name="selected-model"]:checked').val();
+            var templateName = $('#template-name').val();
+            var modelName = $('#model-name').val();
+
+            // 检查文本框是否为空
+            if (modelName.trim() === '') {
+                alert('Please enter a model name.');
+                return;
+            }
+
+            // 向后端发送选择的模型和自定义名称
+            $.ajax({
+                url: '{{ url_for("save_model") }}',
+                type: 'POST',
+                data: {
+                    'selectedModel': selectedModel,
+                    'modelName': modelName,
+                    'templateName': templateName
+                },
+                success: function(response) {
+                    if (response.status === 'success') {
+                        alert('存储成功');
+                    } else {
+                        alert('存储失败');
+                    }
+                }
+            });
+        });
+
+        function showEvaluationTable() {
+            var tableContainer = document.getElementById('evaluation-table-container');
+            var table = document.createElement('table');
+            var thead = document.createElement('thead');
+            var tbody = document.createElement('tbody');
+            var headerRow = document.createElement('tr');
+
+            // Create table header
+            var headerModel = document.createElement('th');
+            headerModel.innerHTML = '模型';
+            headerRow.appendChild(headerModel);
+
+            var headerMetric1 = document.createElement('th');
+            headerMetric1.innerHTML = '训练集准确度';
+            headerRow.appendChild(headerMetric1);
+
+            var headerMetric2 = document.createElement('th');
+            headerMetric2.innerHTML = '验证集准确度';
+            headerRow.appendChild(headerMetric2);
+
+            thead.appendChild(headerRow);
+            table.appendChild(thead);
+
+            // Create table body
+            for (var modelName in evaluationMetrics) {
+                var modelNameChinese = modelNamesChinese[modelName]
+                var row = document.createElement('tr');
+
+                var cellModel = document.createElement('td');
+                cellModel.innerHTML = modelNameChinese;
+                row.appendChild(cellModel);
+
+                var cellMetric1 = document.createElement('td');
+                cellMetric1.innerHTML = evaluationMetrics[modelName].train_acc.toFixed(2) + '%';
+                row.appendChild(cellMetric1);
+
+                var cellMetric2 = document.createElement('td');
+                cellMetric2.innerHTML = evaluationMetrics[modelName].valid_acc.toFixed(2) + '%';
+                row.appendChild(cellMetric2);
+
+                tbody.appendChild(row);
+            }
+
+            table.appendChild(tbody);
+            tableContainer.appendChild(table);
+        }
+    
+    </script>
+{% endblock %}
