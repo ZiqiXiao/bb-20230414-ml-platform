@@ -12,6 +12,7 @@ build
 *.log
 *.pid
 *.sock
+.DS_Store
 
 # 忽略编辑器配置文件
 .vscode
