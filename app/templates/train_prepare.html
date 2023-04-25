@@ -157,10 +157,19 @@
         $('#upload-form').on('submit', function(event) {
                 event.preventDefault(); // 阻止默认的表单提交行为
 
-                // 检查文件是否已经上传
+                // 检查文件是否已经上传并且预测目标已经填写
                 const uploadedFilename = $('#file').data('uploaded-filename');
+                
                 if (!uploadedFilename) {
-                    alert('Please upload a file before submitting.');
+                    alert('请在提交前先上传数据集文件');
+                    return;
+                }
+                else if(!$('#label').val()) {
+                    alert('请在提交前先填写预测目标名称');
+                    return;
+                }
+                else if ($('#label-message').text() !== '名称存在于数据集文件中') {
+                    alert('请在提交前先填写正确的预测目标名称');
                     return;
                 }
 
