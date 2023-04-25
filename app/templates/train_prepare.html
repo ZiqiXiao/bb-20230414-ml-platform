@@ -159,24 +159,29 @@
 
                 // 检查文件是否已经上传并且预测目标已经填写
                 const uploadedFilename = $('#file').data('uploaded-filename');
+                const labelText = $('#label').val();
+                const labelMessageText = $('#label-message').text();
+                // 从表单中获取model_name
+                const modelClass =  $('input[name="modelClass"]:checked').map(function() {
+                    return this.value;
+                }).get().join(',');
                 
                 if (!uploadedFilename) {
                     alert('请在提交前先上传数据集文件');
                     return;
                 }
-                else if(!$('#label').val()) {
+                else if(!labelText) {
                     alert('请在提交前先填写预测目标名称');
                     return;
                 }
-                else if ($('#label-message').text() !== '名称存在于数据集文件中') {
+                else if (labelMessageText !== '名称存在于数据集文件中') {
                     alert('请在提交前先填写正确的预测目标名称');
                     return;
                 }
-
-                // 从表单中获取model_name
-                const modelClass =  $('input[name="modelClass"]:checked').map(function() {
-                    return this.value;
-                }).get().join(',');
+                else if(modelClass === '') {
+                    alert('请在提交前先选择模型');
+                    return;
+                }
 
                 // 从表单中获取label
                 const label = $('#label').val();
