@@ -138,6 +138,10 @@
             // 更新单选框选项
             $('#model-select-list').html(modelOptions);
         });
+
+        // 名称输入提示
+        const nameCorrectMessage = '名称可使用';
+        const nameErrorMessage = '名称已存在，请尝试别的名称';
         
 
         $('#model-name').on('input', function() {
@@ -152,9 +156,9 @@
                     },
                     success: function(response) {
                         if (response.status === 'success') {
-                            $('#model-name-message').text('名称可使用').css('color', 'green');
+                            $('#model-name-message').text(nameCorrectMessage).css('color', 'green');
                         } else {
-                            $('#model-name-message').text('名称已存在，请尝试别的名称').css('color', 'red');
+                            $('#model-name-message').text(nameErrorMessage).css('color', 'red');
                         }
                     }
                 });
@@ -173,9 +177,9 @@
                     },
                     success: function(response) {
                         if (response.status === 'success') {
-                            $('#template-name-message').text('名称可使用').css('color', 'green');
+                            $('#template-name-message').text(nameCorrectMessage).css('color', 'green');
                         } else {
-                            $('#template-name-message').text('名称已存在，请尝试别的名称').css('color', 'red');
+                            $('#template-name-message').text(nameErrorMessage).css('color', 'red');
                         }
                     }
                 });
@@ -188,11 +192,25 @@
             // 获取选择的模型和自定义名称
             var selectedModel = $('input[name="selected-model"]:checked').val();
             var templateName = $('#template-name').val();
+            var templateNameMessage = $('#template-name-message').text();
             var modelName = $('#model-name').val();
+            var modelNameMessage = $('#model-name-message').text();
 
-            // 检查文本框是否为空
+            // 检查文本框是否为空且模型名称和模板名称是否已存在
             if (modelName.trim() === '') {
-                alert('Please enter a model name.');
+                alert('请输入模型名称');
+                return;
+            }
+            else if (modelNameMessage===nameErrorMessage) {
+                alert('模型名称已存在，请尝试别的名称');
+                return;
+            }
+            else if (templateName.trim() === '') {
+                alert('请输入模板名称');
+                return;
+            }
+            else if (templateNameMessage===nameErrorMessage) {
+                alert('模板名称已存在，请尝试别的名称');
                 return;
             }
 
