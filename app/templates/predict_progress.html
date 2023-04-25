@@ -29,13 +29,13 @@
                 $('#predict-status').scrollTop($('#predict-status')[0].scrollHeight);
                 // when message is 'Training complete', show a button to return to the main page
                 if (data.message == '预测成功') {
-                    $('#predict-progress').append('<a href="/predict_result/' + data.result_path + '">点击下载预测结果文件</a>');
+                    $('#predict-progress').append('<a href="{{ url_for("download_predict_result", filename="") }}/' + data.result_path + '">点击下载预测结果文件</a>');
                 }
             });
             
 
             // Tell server to start training
-            socket.emit('start_predict', {
+            socket.emit('start-predict', {
                 filename: "{{filename}}",
                 model_class: "{{model_class}}",
                 model_name: "{{model_name}}",
