@@ -65,8 +65,6 @@ def init_train_routes(app, socketio):
             modelClass = data['modelClass'].split(',')
             label = data['label']
             param = json.loads(data['param'].replace('&#34;', '\"'))
-            print(type(param))
-            print(param)
 
             thread = threading.Thread(target=train_scheduler, args=(app, filename, modelClass, trained_models, label, param, socketio))
             thread.start()

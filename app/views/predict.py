@@ -99,7 +99,7 @@ def download_predict_result_route(filename: str):
     """The function of downloading the prediction result.
 
     Args:
-        filename (str): The name of prediciton result file.
+        filename (str): The name of prediction result file.
 
     Returns:
         The file of prediction result.

@@ -37,7 +37,11 @@ def train_scheduler(
     for m in model_class:
         socketio.emit('start-training', {'modelName': m})
         # time.sleep(1)
-        custom_param = param.get(m, {})
+        custom_param = param.get(m)
+        for idx, val in custom_param.items():
+            if not val:
+                custom_param[idx] = Config.DEFAULT_PARAMS[m][idx]
+        print(custom_param)
         model = training(app, filename, m, label, custom_param, socketio)
 
         model_dict[m] = model
