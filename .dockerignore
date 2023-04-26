@@ -30,3 +30,7 @@ test
 *.ipynb
 venv
 docker-build.sh
+cleanuo.sh
+
+docker-compose.yml
+docker-compose.debug.yml
