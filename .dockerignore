@@ -23,7 +23,7 @@ test
 config.yaml
 
 # 忽略文档和示例代码
-doc
+docs
 examples
 desc
 test
