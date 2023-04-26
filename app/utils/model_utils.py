@@ -29,25 +29,29 @@ def train_scheduler(
 
     Returns:
         _type_: _description_
-    """        
-    # 将表中的表头读取下来作为模板，用于后续的预测。不包含label
-    header = pd.read_csv(os.path.join(Config.UPLOAD_TRAIN_FOLDER, filename), nrows=0).drop(label, axis=1)
-    model_dict['template'] = header
-    # 训练模型
-    for m in model_class:
-        socketio.emit('start-training', {'modelName': m})
-        # time.sleep(1)
-        custom_param = param.get(m)
-        for idx, val in custom_param.items():
-            if not val:
-                custom_param[idx] = Config.DEFAULT_PARAMS[m][idx]
-        print(custom_param)
-        model = training(app, filename, m, label, custom_param, socketio)
+    """
+    try:
+        # 将表中的表头读取下来作为模板，用于后续的预测。不包含label
+        header = pd.read_csv(os.path.join(Config.UPLOAD_TRAIN_FOLDER, filename), nrows=0).drop(label, axis=1)
+        model_dict['template'] = header
+        # 训练模型
+        for m in model_class:
+            socketio.emit('start-training', {'modelName': m})
+            # time.sleep(1)
+            custom_param = param.get(m, {})
+            
+            for idx, val in custom_param.items():
+                if not val and Config.DEFAULT_PARAMS[m]:
+                    custom_param[idx] = Config.DEFAULT_PARAMS[m][idx]
+            model = training(app, filename, m, label, custom_param, socketio)
 
-        model_dict[m] = model
+            model_dict[m] = model
 
-    socketio.emit('training-finished')
-    return model_dict
+        socketio.emit('training-finished')
+        return model_dict
+    except Exception as e:
+        app.logger.error(f"Training Error: {str(e)}\n{traceback.format_exc()}")
+        socketio.emit('training_log', {'message': f'Error: {str(e)}\n{traceback.format_exc()}'})
 
 
 def training(app, filename, model_class, label='label', param={}, socketio=None):
@@ -63,12 +67,7 @@ def training(app, filename, model_class, label='label', param={}, socketio=None)
     model = model_module.Model(app=app, socketio=socketio)
 
     # Train the model
-    try:
-        model_file = model.train(dataset_path, label, custom_params=param)
-    except Exception as e:
-        app.logger.error(f"Training Error: {str(e)}\n{traceback.format_exc()}")
-        socketio.emit('training_log', {'message': f'Error: {str(e)}\n{traceback.format_exc()}'})
-        return
+    model_file = model.train(dataset_path, label, custom_params=param)
 
     app.logger.info(f"Training Success")
     return model_file
