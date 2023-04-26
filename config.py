@@ -56,9 +56,9 @@ class Config:
     # Default Values
     # Default Tolerance
     DEFAULT_TOLERANCE = 0.15
-    """The default tolerance to cosider a prediction as correct."""
+    """The default tolerance to consider a prediction as correct."""
 
-    # Model Stucture files
+    # Model Structure files
     MODEL_STRUCTURE = {
         'xgboost': 'app.models.xgb',
         'mlp': 'app.models.mlp',
