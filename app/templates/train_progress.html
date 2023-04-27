@@ -290,19 +290,19 @@
                 row.appendChild(cellMetric2);
 
                 var cellMetric3 = document.createElement('td');
-                cellMetric3.innerHTML = evaluationMetrics[modelName].train_mse.toFixed(2);
+                cellMetric3.innerHTML = evaluationMetrics[modelName].train_mse.toFixed(6);
                 row.appendChild(cellMetric3);
 
                 var cellMetric4 = document.createElement('td');
-                cellMetric4.innerHTML = evaluationMetrics[modelName].valid_mse.toFixed(2);
+                cellMetric4.innerHTML = evaluationMetrics[modelName].valid_mse.toFixed(6);
                 row.appendChild(cellMetric4);
 
                 var cellMetric5 = document.createElement('td');
-                cellMetric5.innerHTML = evaluationMetrics[modelName].train_mae.toFixed(2);
+                cellMetric5.innerHTML = evaluationMetrics[modelName].train_mae.toFixed(6);
                 row.appendChild(cellMetric5);
 
                 var cellMetric6 = document.createElement('td');
-                cellMetric6.innerHTML = evaluationMetrics[modelName].valid_mae.toFixed(2);
+                cellMetric6.innerHTML = evaluationMetrics[modelName].valid_mae.toFixed(6);
                 row.appendChild(cellMetric6);
 
                 tbody.appendChild(row);
