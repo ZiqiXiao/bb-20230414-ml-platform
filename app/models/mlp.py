@@ -4,7 +4,7 @@ from torch.utils.data import Dataset, DataLoader
 from torch import optim
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from app.models.utils import cal_acc
+from app.models.utils import cal_metrics
 import numpy as np
 from config import Config
 
@@ -88,7 +88,7 @@ class Model:
         criterion = nn.MSELoss()
         optimizer = optim.Adam(self.model.parameters(), lr=lr)
 
-        def eval_model(model, dataloader):
+        def eval_model(model, dataloader, type='train'):
             """
             评估模型
             """
@@ -101,8 +101,8 @@ class Model:
                     y_true = np.append(y_true, targets.numpy().flatten())
                     y_pred = np.append(y_pred, outputs.numpy().flatten())
                     
-            acc = cal_acc(y_true, y_pred)
-            return acc
+            metrics = cal_metrics(y_true, y_pred, type=type)
+            return metrics
 
         self.app.logger.info('training started')
         # 训练模型
@@ -123,14 +123,12 @@ class Model:
             # print(f'Epoch [{epoch}/{num_epochs}]')
 
 
-        train_acc = float(eval_model(self.model, train_dataloader))
-        valid_acc = float(eval_model(self.model, valid_dataloader))
+        train_metrics = eval_model(self.model, train_dataloader, type='train')
+        valid_metrics = eval_model(self.model, valid_dataloader, type='valid')
+        valid_metrics.update(train_metrics)
         self.socketio.emit('model_evaluation', 
                             {'modelName': 'mlp',
-                            'metrics': {
-                                'train_acc': train_acc,
-                                'valid_acc': valid_acc,
-                            }
+                            'metrics': valid_metrics
                             })
         return self.model
             

@@ -253,6 +253,22 @@
             headerMetric2.innerHTML = '验证集准确度';
             headerRow.appendChild(headerMetric2);
 
+            var headerMetric3 = document.createElement('th');
+            headerMetric3.innerHTML = '训练接均方误差';
+            headerRow.appendChild(headerMetric3);
+
+            var headerMetric4 = document.createElement('th');
+            headerMetric4.innerHTML = '验证集均方误差';
+            headerRow.appendChild(headerMetric4);
+
+            var headerMetric5 = document.createElement('th');
+            headerMetric5.innerHTML = '训练集平均绝对误差';
+            headerRow.appendChild(headerMetric5);
+
+            var headerMetric6 = document.createElement('th');
+            headerMetric6.innerHTML = '验证集平均绝对误差';
+            headerRow.appendChild(headerMetric6);
+
             thead.appendChild(headerRow);
             table.appendChild(thead);
 
@@ -272,6 +288,22 @@
                 var cellMetric2 = document.createElement('td');
                 cellMetric2.innerHTML = evaluationMetrics[modelName].valid_acc.toFixed(2) + '%';
                 row.appendChild(cellMetric2);
+
+                var cellMetric3 = document.createElement('td');
+                cellMetric3.innerHTML = evaluationMetrics[modelName].train_mse.toFixed(2);
+                row.appendChild(cellMetric3);
+
+                var cellMetric4 = document.createElement('td');
+                cellMetric4.innerHTML = evaluationMetrics[modelName].valid_mse.toFixed(2);
+                row.appendChild(cellMetric4);
+
+                var cellMetric5 = document.createElement('td');
+                cellMetric5.innerHTML = evaluationMetrics[modelName].train_mae.toFixed(2);
+                row.appendChild(cellMetric5);
+
+                var cellMetric6 = document.createElement('td');
+                cellMetric6.innerHTML = evaluationMetrics[modelName].valid_mae.toFixed(2);
+                row.appendChild(cellMetric6);
 
                 tbody.appendChild(row);
             }

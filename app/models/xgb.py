@@ -5,7 +5,7 @@ from sklearn.metrics import accuracy_score, mean_squared_error
 import os
 import joblib
 import pandas as pd
-from app.models.utils import cal_acc
+from app.models.utils import cal_metrics
 import numpy as np
 from config import Config
 
@@ -78,15 +78,14 @@ class Model:
             callbacks=[progress_callback]
             )
 
-        train_acc = cal_acc(np.array(self.model.predict(dtrain)), np.array(train_y))
-        valid_acc = cal_acc(np.array(self.model.predict(dvalid)), np.array(valid_y))
+        train_metrics = cal_metrics(np.array(train_y), np.array(self.model.predict(dtrain)), type='train')
+        valid_metrics = cal_metrics(np.array(valid_y), np.array(self.model.predict(dvalid)), type='valid')
+        valid_metrics.update(train_metrics)
+
 
         self.socketio.emit('model_evaluation', 
                                {'modelName': 'xgboost',
-                                'metrics': {
-                                    'train_acc': train_acc,
-                                    'valid_acc': valid_acc,
-                                }
+                                'metrics': valid_metrics
                                 })
         
 

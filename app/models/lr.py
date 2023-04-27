@@ -1,7 +1,7 @@
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_squared_error
-from app.models.utils import cal_acc
+from sklearn.metrics import mean_squared_error, mean_absolute_error
+from app.models.utils import cal_metrics
 import os
 import joblib
 import pandas as pd
@@ -44,15 +44,13 @@ class Model:
         self.model = LinearRegression(**self.default_params)
         self.model.fit(train_X, train_y)
 
-        train_acc = cal_acc(train_y, self.model.predict(train_X))
-        valid_acc = cal_acc(valid_y, self.model.predict(valid_X))
+        train_metrics = cal_metrics(train_y, self.model.predict(train_X), type='train')
+        valid_metrics = cal_metrics(valid_y, self.model.predict(valid_X), type='valid')
+        valid_metrics.update(train_metrics)
 
         self.socketio.emit('model_evaluation', 
                                {'modelName': 'lr',
-                                'metrics': {
-                                    'train_acc': train_acc,
-                                    'valid_acc': valid_acc,
-                                }
+                                'metrics': valid_metrics
                                 })
 
         self.socketio.emit('training_progress', {'modelName': 'lr', 'progress': 100})
