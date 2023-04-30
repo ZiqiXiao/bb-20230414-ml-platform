@@ -39,6 +39,7 @@ def train_scheduler(
             socketio.emit('start-training', {'modelName': m})
             # time.sleep(1)
             custom_param = param.get(m, {})
+            custom_param['train_size'] = param.get('train_size', {})
             
             for idx, val in custom_param.items():
                 if not val and Config.DEFAULT_PARAMS[m]:
@@ -51,7 +52,8 @@ def train_scheduler(
         return model_dict
     except Exception as e:
         app.logger.error(f"Training Error: {str(e)}\n{traceback.format_exc()}")
-        socketio.emit('training_log', {'message': f'Error: {str(e)}\n{traceback.format_exc()}'})
+        socketio.emit('training_log', {'message': f'Error: {str(e)}\n{traceback.format_exc()}',
+                                       'type': 'error'})
 
 
 def training(app, filename, model_class, label='label', param={}, socketio=None):

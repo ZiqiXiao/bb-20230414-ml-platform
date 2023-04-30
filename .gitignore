@@ -29,3 +29,5 @@ test
 *.ipynb
 venv
 data
+部署流程.md
+部署流程.pdf

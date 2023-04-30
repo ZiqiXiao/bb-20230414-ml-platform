@@ -5,7 +5,7 @@ from sklearn.metrics import accuracy_score, mean_squared_error
 import os
 import joblib
 import pandas as pd
-from app.models.utils import cal_metrics
+from app.models.utils import cal_metrics, load_dataset, data_preprocess
 import numpy as np
 from config import Config
 
@@ -38,30 +38,27 @@ class Model:
         self.default_params = Config.DEFAULT_PARAMS['xgboost']
         self.default_params.update(Config.DEFAULT_PARAMS_UNDER['xgboost'])
 
-    def log_message(self, message):
-        if self.socketio is not None:
-            self.socketio.emit('training_log', {'message': message})
-
-    def load_dataset(self, dataset_path):
-        return pd.read_csv(dataset_path)
-
     def train(self, dataset_path, label, custom_params={}):
+        # 设置模型参数
+        self.default_params.update(custom_params)
+        num_boost_round = self.default_params.pop('num_boost_round')
+        train_size = self.default_params.get('train_size', Config.DEFAULT_PARAMS_PREPROCESSING['train_size'])
+        self.default_params.pop('train_size')
+
         # 加载数据集
-        dataset = self.load_dataset(dataset_path)
+        dataset = load_dataset(dataset_path)
         # print('dataset loaded')
         self.app.logger.info('dataset loaded')
 
         # 对数据集进行预处理，例如划分训练集和验证集，并转换为xgboost需要的数据格式
-        train_X, valid_X, train_y, valid_y = train_test_split(dataset.drop(label , axis=1), dataset[label], test_size=0.2, random_state=42)
+        train_X, valid_X, train_y, valid_y = data_preprocess(dataset, label, train_size=train_size)
         # print('dataset split')
         self.app.logger.info('dataset split')
 
         dtrain = xgb.DMatrix(train_X, label=train_y)
         dvalid = xgb.DMatrix(valid_X, label=valid_y)
 
-        # 设置模型参数
-        self.default_params.update(custom_params)
-        num_boost_round = self.default_params.pop('num_boost_round')
+        
 
         # 训练模型
         # print('training model ... ')
@@ -81,7 +78,6 @@ class Model:
         train_metrics = cal_metrics(np.array(train_y), np.array(self.model.predict(dtrain)), type='train')
         valid_metrics = cal_metrics(np.array(valid_y), np.array(self.model.predict(dvalid)), type='valid')
         valid_metrics.update(train_metrics)
-
 
         self.socketio.emit('model_evaluation', 
                                {'modelName': 'xgboost',

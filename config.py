@@ -104,3 +104,7 @@ class Config:
             },
     }
     """The default parameters(hyperparameter) for the models that is not showed on the frontpage."""
+
+    DEFAULT_PARAMS_PREPROCESSING = {
+        'train_size': 0.8,
+    }

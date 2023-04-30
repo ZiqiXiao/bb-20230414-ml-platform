@@ -4,7 +4,7 @@ from torch.utils.data import Dataset, DataLoader
 from torch import optim
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from app.models.utils import cal_metrics
+from app.models.utils import cal_metrics, data_preprocess
 import numpy as np
 from config import Config
 
@@ -63,8 +63,15 @@ class Model:
         dataset = self.load_dataset(dataset_path)
         self.app.logger.info('dataset loaded')
 
-        # 对数据集进行预处理，例如划分训练集和验证集，并转换为pytorch需要的数据格式
-        train_X, valid_X, train_y, valid_y = train_test_split(dataset.drop(label , axis=1), dataset[label], test_size=0.2, random_state=42)
+       # 设置模型参数
+        self.default_params.update(custom_params)
+        train_size = self.default_params.get('train_size', Config.DEFAULT_PARAMS_PREPROCESSING['train_size'])
+        self.default_params.pop('train_size')
+        print(train_size)
+
+        # 对数据集进行预处理，例如划分训练集和验证集
+        train_X, valid_X, train_y, valid_y = data_preprocess(dataset, label, train_size=train_size)
+        self.app.logger.info('dataset split')
         train_dataset = MyDataset(train_X, train_y)
         valid_dataset = MyDataset(valid_X, valid_y)
         train_dataloader = DataLoader(train_dataset, batch_size=64, shuffle=True)
@@ -74,8 +81,6 @@ class Model:
         # 设置模型参数
         input_size = train_X.shape[1]
         output_size = 1
-
-        self.default_params.update(custom_params)
 
         hidden_size = custom_params.get('hidden_size', self.default_params['hidden_size'])
         lr = custom_params.get('lr', self.default_params['lr'])

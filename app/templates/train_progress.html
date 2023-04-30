@@ -99,6 +99,16 @@
 
             trainingProgress.appendChild(modelContainer);
         });
+
+        socket.on('training_log', function(data) {
+            // 监听错误消息，如果有错误消息则显示错误消息
+            if (data.type === 'error' ) {
+                alert(data.message);
+            } else {
+                // 处理其他类型的消息，例如在控制台中显示
+                console.log(data.message);
+            }
+        });
         
         // 更新模型进度条
         socket.on('training_progress', function(data) {
@@ -246,28 +256,44 @@
             headerRow.appendChild(headerModel);
 
             var headerMetric1 = document.createElement('th');
-            headerMetric1.innerHTML = '训练集准确度';
+            headerMetric1.innerHTML = '训练集ACC';
             headerRow.appendChild(headerMetric1);
 
             var headerMetric2 = document.createElement('th');
-            headerMetric2.innerHTML = '验证集准确度';
+            headerMetric2.innerHTML = '验证集ACC';
             headerRow.appendChild(headerMetric2);
 
             var headerMetric3 = document.createElement('th');
-            headerMetric3.innerHTML = '训练集均方误差';
+            headerMetric3.innerHTML = '训练集MSE';
             headerRow.appendChild(headerMetric3);
 
             var headerMetric4 = document.createElement('th');
-            headerMetric4.innerHTML = '验证集均方误差';
+            headerMetric4.innerHTML = '验证集MSE';
             headerRow.appendChild(headerMetric4);
 
             var headerMetric5 = document.createElement('th');
-            headerMetric5.innerHTML = '训练集平均绝对误差';
+            headerMetric5.innerHTML = '训练集MAE';
             headerRow.appendChild(headerMetric5);
 
             var headerMetric6 = document.createElement('th');
-            headerMetric6.innerHTML = '验证集平均绝对误差';
+            headerMetric6.innerHTML = '验证集MAE';
             headerRow.appendChild(headerMetric6);
+
+            var headerMetric7 = document.createElement('th');
+            headerMetric7.innerHTML = '训练集R2';
+            headerRow.appendChild(headerMetric7);
+
+            var headerMetric8 = document.createElement('th');
+            headerMetric8.innerHTML = '验证集R2';
+            headerRow.appendChild(headerMetric8);
+
+            var headerMetric9 = document.createElement('th');
+            headerMetric9.innerHTML = '训练集RMSE';
+            headerRow.appendChild(headerMetric9);
+
+            var headerMetric10 = document.createElement('th');
+            headerMetric10.innerHTML = '验证集RMSE';
+            headerRow.appendChild(headerMetric10);
 
             thead.appendChild(headerRow);
             table.appendChild(thead);
@@ -304,6 +330,23 @@
                 var cellMetric6 = document.createElement('td');
                 cellMetric6.innerHTML = evaluationMetrics[modelName].valid_mae.toFixed(6);
                 row.appendChild(cellMetric6);
+
+                var cellMetric7 = document.createElement('td');
+                cellMetric7.innerHTML = evaluationMetrics[modelName].train_r2.toFixed(6);
+                row.appendChild(cellMetric7);
+
+                var cellMetric8 = document.createElement('td');
+                cellMetric8.innerHTML = evaluationMetrics[modelName].valid_r2.toFixed(6);
+                row.appendChild(cellMetric8);
+
+                var cellMetric9 = document.createElement('td');
+                cellMetric9.innerHTML = evaluationMetrics[modelName].train_rmse.toFixed(6);
+                row.appendChild(cellMetric9);
+
+                var cellMetric10 = document.createElement('td');
+                cellMetric10.innerHTML = evaluationMetrics[modelName].valid_rmse.toFixed(6);
+                row.appendChild(cellMetric10);
+
 
                 tbody.appendChild(row);
             }

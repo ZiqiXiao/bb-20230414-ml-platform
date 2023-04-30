@@ -1,7 +1,7 @@
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error
-from app.models.utils import cal_metrics
+from app.models.utils import cal_metrics, data_preprocess
 import os
 import joblib
 import pandas as pd
@@ -32,12 +32,15 @@ class Model:
         dataset = self.load_dataset(dataset_path)
         self.app.logger.info('dataset loaded')
 
-        # 对数据集进行预处理，例如划分训练集和验证集
-        train_X, valid_X, train_y, valid_y = train_test_split(dataset.drop(label , axis=1), dataset[label], test_size=0.2, random_state=42)
-        self.app.logger.info('dataset split')
-
         # 设置模型参数
         self.default_params.update(custom_params)
+        train_size = self.default_params.get('train_size', Config.DEFAULT_PARAMS_PREPROCESSING['train_size'])
+        self.default_params.pop('train_size')
+        print(train_size)
+
+        # 对数据集进行预处理，例如划分训练集和验证集
+        train_X, valid_X, train_y, valid_y = data_preprocess(dataset, label, train_size=train_size)
+        self.app.logger.info('dataset split')
 
         # 训练模型
         self.app.logger.info('training model ... ')

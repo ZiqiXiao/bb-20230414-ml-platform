@@ -12,7 +12,7 @@ def init_model_admin_routes(app: object, socketio: object):
         return model_admin_route()    
     
     @app.route('/delete-model', methods=['POST'])
-    def delete_model(app, socketio):
+    def delete_model():
         return delete_model_route(app, socketio)
 
     @app.route('/rename-model', methods=['POST'])

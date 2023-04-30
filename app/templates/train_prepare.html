@@ -9,6 +9,8 @@
         <label for="file">上传csv格式的数据文件:</label>
         <input type="file" name="file" id="file" accept=".csv">
         <br>
+        <label>训练集占比：</label>
+        <input type="number" name="trainSize" id="trainSize" value="0.8" min="0" max="1" step="0.01">
         <label>选择模型:</label>
         <div id="model-class-list">
             <div>
@@ -135,7 +137,9 @@
         
         // 收集模型参数
         function collectModelParameters() {
-            const modelParameters = {};
+            const modelParameters = {
+                train_size: parseFloat($('#trainSize').val()),
+            };
 
             if ($('#modelClass-xgboost').is(':checked')) {
                 modelParameters.xgboost = {
