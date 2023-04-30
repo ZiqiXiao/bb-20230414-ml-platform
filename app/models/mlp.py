@@ -18,9 +18,10 @@ class MLP(nn.Module):
         super().__init__()
         self.fc1 = nn.Linear(input_size, hidden_size)
         self.relu = nn.ReLU()
-        self.fc2 = nn.Linear(hidden_size, hidden_size)
+        self.fc2 = nn.Linear(hidden_size, 12)
         self.relu2 = nn.ReLU()
-        self.fc3 = nn.Linear(hidden_size, output_size)
+        self.fc3 = nn.Linear(12, output_size)
+
 
     def forward(self, x):
         out = self.fc1(x)
@@ -148,7 +149,7 @@ class Model:
         best_valid_metrics.update(best_train_metrics)
         self.socketio.emit('model_evaluation', 
                             {'modelName': 'mlp',
-                            'metrics': valid_metrics
+                            'metrics': best_valid_metrics
                             })
         # 返回best_iter模型
         return best_model
@@ -172,5 +173,5 @@ class Model:
         self.model.eval()
         with torch.no_grad():
             outputs = self.model(data)
-            _, predicted = torch.max(outputs.data, 1)
-            return predicted
+            # _, predicted = torch.max(outputs.data, 1)
+            return outputs

@@ -88,7 +88,7 @@ class Config:
                     'colsample_bytree': 0.8,
                     'objective': 'reg:squarederror',},
                     
-        'mlp': {'hidden_size': 4,
+        'mlp': {'hidden_size': 64,
                 'lr': 0.01,},
 
         'svr': {'kernel': 'rbf',
