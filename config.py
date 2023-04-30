@@ -71,7 +71,7 @@ class Config:
     DEFAULT_PARAMS = {
         'xgboost': {'num_boost_round': 20,},
                     
-        'mlp': {'num_epochs': 50,},
+        'mlp': {'num_epochs': 300,},
 
         'svr': {},
 
