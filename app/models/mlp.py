@@ -1,3 +1,4 @@
+import copy
 import torch
 import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
@@ -17,12 +18,16 @@ class MLP(nn.Module):
         super().__init__()
         self.fc1 = nn.Linear(input_size, hidden_size)
         self.relu = nn.ReLU()
-        self.fc2 = nn.Linear(hidden_size, output_size)
+        self.fc2 = nn.Linear(hidden_size, hidden_size)
+        self.relu2 = nn.ReLU()
+        self.fc3 = nn.Linear(hidden_size, output_size)
 
     def forward(self, x):
         out = self.fc1(x)
         out = self.relu(out)
         out = self.fc2(out)
+        out = self.relu2(out)
+        out = self.fc3(out)
         return out
     
 class MyDataset(Dataset):
@@ -112,6 +117,9 @@ class Model:
         self.app.logger.info('training started')
         # 训练模型
         self.model.train()
+        best_acc = 0.0
+        best_train_metrics = {}
+        best_valid_metrics = {}
         for epoch in range(num_epochs):
             for i, (inputs, targets) in enumerate(train_dataloader):
                 # 向前传播
@@ -123,19 +131,27 @@ class Model:
                 loss.backward()
                 optimizer.step()
 
+            # 计算训练集和验证集的指标
+            train_metrics = eval_model(self.model, train_dataloader, type='train')
+            valid_metrics = eval_model(self.model, valid_dataloader, type='valid')
+            best_acc = max(best_acc, valid_metrics['valid_acc'])
+            
+            if best_acc == valid_metrics['valid_acc']:
+                best_train_metrics = train_metrics
+                best_valid_metrics = valid_metrics
+                best_model = copy.deepcopy(self.model)
+            
             progress =  (epoch+1) / num_epochs * 100
             self.socketio.emit('training_progress', {'modelName': 'mlp', 'progress': progress})
             # print(f'Epoch [{epoch}/{num_epochs}]')
 
-
-        train_metrics = eval_model(self.model, train_dataloader, type='train')
-        valid_metrics = eval_model(self.model, valid_dataloader, type='valid')
-        valid_metrics.update(train_metrics)
+        best_valid_metrics.update(best_train_metrics)
         self.socketio.emit('model_evaluation', 
                             {'modelName': 'mlp',
                             'metrics': valid_metrics
                             })
-        return self.model
+        # 返回best_iter模型
+        return best_model
             
 
 

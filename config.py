@@ -71,7 +71,7 @@ class Config:
     DEFAULT_PARAMS = {
         'xgboost': {'num_boost_round': 20,},
                     
-        'mlp': {'num_epochs': 100,},
+        'mlp': {'num_epochs': 50,},
 
         'svr': {},
 
@@ -88,7 +88,7 @@ class Config:
                     'colsample_bytree': 0.8,
                     'objective': 'reg:squarederror',},
                     
-        'mlp': {'hidden_size': 128,
+        'mlp': {'hidden_size': 4,
                 'lr': 0.01,},
 
         'svr': {'kernel': 'rbf',
