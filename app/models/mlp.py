@@ -5,7 +5,7 @@ from torch.utils.data import Dataset, DataLoader
 from torch import optim
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from app.models.utils import cal_metrics, data_preprocess
+from app.models.utils import cal_metrics, data_preprocess, load_dataset
 import numpy as np
 from config import Config
 
@@ -53,20 +53,17 @@ class Model:
         self.model = model
         self.app = app
         self.socketio = socketio
-        self.default_params = Config.DEFAULT_PARAMS['mlp']
+        self.default_params = Config.DEFAULT_PARAMS['mlp'].copy()
         self.default_params.update(Config.DEFAULT_PARAMS_UNDER['mlp'])
 
     def log_message(self, message):
         if self.socketio is not None:
             self.socketio.emit('training_log', {'message': message})
-
-    def load_dataset(self, dataset_path):
-        return pd.read_csv(dataset_path)
     
 
     def train(self, dataset_path, label, custom_params={}):
         # 加载数据集
-        dataset = self.load_dataset(dataset_path)
+        dataset = load_dataset(dataset_path)
         self.app.logger.info('dataset loaded')
 
        # 设置模型参数
@@ -168,7 +165,7 @@ class Model:
         if self.model is None:
             self.app.logger.warning("Model not trained yet. Train the model before making predictions.")
         self.app.logger.info('predicting ... ')
-        data = self.load_dataset(dataset_path)
+        data = load_dataset(dataset_path)
         data = torch.tensor(data.values, dtype=torch.float32)
         self.model.eval()
         with torch.no_grad():

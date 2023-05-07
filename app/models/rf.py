@@ -1,7 +1,7 @@
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error
-from app.models.utils import cal_metrics, data_preprocess
+from app.models.utils import cal_metrics, data_preprocess, load_dataset
 import os
 import joblib
 import pandas as pd
@@ -17,19 +17,16 @@ class Model:
         self.model = model
         self.app = app
         self.socketio = socketio
-        self.default_params = Config.DEFAULT_PARAMS['rf']
+        self.default_params = Config.DEFAULT_PARAMS['rf'].copy()
         self.default_params.update(Config.DEFAULT_PARAMS_UNDER['rf'])
 
     def log_message(self, message):
         if self.socketio is not None:
             self.socketio.emit('training_log', {'message': message})
 
-    def load_dataset(self, dataset_path):
-        return pd.read_csv(dataset_path)
-
     def train(self, dataset_path, label, custom_params={}):
         # 加载数据集
-        dataset = self.load_dataset(dataset_path)
+        dataset = load_dataset(dataset_path)
         self.app.logger.info('dataset loaded')
 
         # 设置模型参数
@@ -64,7 +61,7 @@ class Model:
         if self.model is None:
             self.app.logger.info("Model not trained yet. Train the model before making predictions.")
         self.app.logger.info('predicting ... ')
-        data = self.load_dataset(dataset_path)
+        data = load_dataset(dataset_path)
         predicted = self.model.predict(data)
         return predicted
 

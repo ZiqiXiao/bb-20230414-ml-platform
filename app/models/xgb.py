@@ -35,7 +35,7 @@ class Model:
         self.model = model
         self.app = app
         self.socketio = socketio
-        self.default_params = Config.DEFAULT_PARAMS['xgboost']
+        self.default_params = Config.DEFAULT_PARAMS['xgboost'].copy()
         self.default_params.update(Config.DEFAULT_PARAMS_UNDER['xgboost'])
 
     def train(self, dataset_path, label, custom_params={}):
@@ -93,7 +93,7 @@ class Model:
         if self.model is None:
             self.app.logger.info("Model not trained yet. Train the model before making predictions.")
         self.app.logger.info('predicting ... ')
-        data = self.load_dataset(dataset_path)
+        data = load_dataset(dataset_path)
         dtest = xgb.DMatrix(data)
         predicted = self.model.predict(dtest)
         return predicted
