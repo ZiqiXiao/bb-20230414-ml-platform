@@ -1,4 +1,5 @@
 import copy
+import random
 import torch
 import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
@@ -77,8 +78,23 @@ class Model:
         self.app.logger.info('dataset split')
         train_dataset = MyDataset(train_X, train_y)
         valid_dataset = MyDataset(valid_X, valid_y)
-        train_dataloader = DataLoader(train_dataset, batch_size=64, shuffle=True)
-        valid_dataloader = DataLoader(valid_dataset, batch_size=64, shuffle=False)
+
+        def seed_worker(worker_id):
+            worker_seed = torch.initial_seed() % 2**32
+            np.random.seed(worker_seed)
+            random.seed(worker_seed)
+
+        # 创建DataLoader
+        train_dataloader = DataLoader(train_dataset, 
+                                      batch_size=64, 
+                                      shuffle=True, 
+                                      worker_init_fn=seed_worker, 
+                                      generator=torch.Generator().manual_seed(0))
+        valid_dataloader = DataLoader(valid_dataset, 
+                                      batch_size=64, 
+                                      shuffle=False, 
+                                      worker_init_fn=seed_worker, 
+                                      generator=torch.Generator().manual_seed(0))
         self.app.logger.info('dataset preprocessed')
 
         # 设置模型参数
@@ -118,6 +134,7 @@ class Model:
         best_acc = 0.0
         best_train_metrics = {}
         best_valid_metrics = {}
+        torch.manual_seed(42)
         for epoch in range(num_epochs):
             for i, (inputs, targets) in enumerate(train_dataloader):
                 # 向前传播
