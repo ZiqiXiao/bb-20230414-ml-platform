@@ -15,6 +15,7 @@ class MLP(nn.Module):
     """
     PyTorch MLP模型
     """
+
     def __init__(self, input_size, hidden_size, output_size):
         super().__init__()
         self.fc1 = nn.Linear(input_size, hidden_size)
@@ -23,7 +24,6 @@ class MLP(nn.Module):
         self.relu2 = nn.ReLU()
         self.fc3 = nn.Linear(12, output_size)
 
-
     def forward(self, x):
         out = self.fc1(x)
         out = self.relu(out)
@@ -31,11 +31,13 @@ class MLP(nn.Module):
         out = self.relu2(out)
         out = self.fc3(out)
         return out
-    
+
+
 class MyDataset(Dataset):
     """
     数据集类
     """
+
     def __init__(self, data, label):
         self.data = torch.tensor(data.values, dtype=torch.float32)
         self.label = torch.tensor(label.values, dtype=torch.float32).view(-1, 1)
@@ -46,10 +48,12 @@ class MyDataset(Dataset):
     def __getitem__(self, index):
         return self.data[index], self.label[index]
 
+
 class Model:
     """
     PyTorch MLP模型
     """
+
     def __init__(self, model=None, app=None, socketio=None):
         self.model = model
         self.app = app
@@ -60,14 +64,13 @@ class Model:
     def log_message(self, message):
         if self.socketio is not None:
             self.socketio.emit('training_log', {'message': message})
-    
 
     def train(self, dataset_path, label, custom_params={}):
         # 加载数据集
         dataset = load_dataset(dataset_path)
         self.app.logger.info('dataset loaded')
 
-       # 设置模型参数
+        # 设置模型参数
         self.default_params.update(custom_params)
         train_size = self.default_params.get('train_size', Config.DEFAULT_PARAMS_PREPROCESSING['train_size'])
         self.default_params.pop('train_size')
@@ -80,20 +83,20 @@ class Model:
         valid_dataset = MyDataset(valid_X, valid_y)
 
         def seed_worker(worker_id):
-            worker_seed = torch.initial_seed() % 2**32
+            worker_seed = torch.initial_seed() % 2 ** 32
             np.random.seed(worker_seed)
             random.seed(worker_seed)
 
         # 创建DataLoader
-        train_dataloader = DataLoader(train_dataset, 
-                                      batch_size=64, 
-                                      shuffle=True, 
-                                      worker_init_fn=seed_worker, 
+        train_dataloader = DataLoader(train_dataset,
+                                      batch_size=64,
+                                      shuffle=True,
+                                      worker_init_fn=seed_worker,
                                       generator=torch.Generator().manual_seed(0))
-        valid_dataloader = DataLoader(valid_dataset, 
-                                      batch_size=64, 
-                                      shuffle=False, 
-                                      worker_init_fn=seed_worker, 
+        valid_dataloader = DataLoader(valid_dataset,
+                                      batch_size=64,
+                                      shuffle=False,
+                                      worker_init_fn=seed_worker,
                                       generator=torch.Generator().manual_seed(0))
         self.app.logger.info('dataset preprocessed')
 
@@ -124,7 +127,7 @@ class Model:
                     outputs = model(inputs)
                     y_true = np.append(y_true, targets.numpy().flatten())
                     y_pred = np.append(y_pred, outputs.numpy().flatten())
-                    
+
             metrics = cal_metrics(y_true, y_pred, type=type)
             return metrics
 
@@ -135,6 +138,16 @@ class Model:
         best_train_metrics = {}
         best_valid_metrics = {}
         torch.manual_seed(42)
+        # 重置权重
+
+        self.app.logger.info(self.model.fc3.weight)
+
+        for layer in self.model.children():
+            if hasattr(layer, 'reset_parameters'):
+                layer.reset_parameters()
+
+        self.app.logger.info(self.model.fc3.weight)
+
         for epoch in range(num_epochs):
             for i, (inputs, targets) in enumerate(train_dataloader):
                 # 向前传播
@@ -150,25 +163,24 @@ class Model:
             train_metrics = eval_model(self.model, train_dataloader, type='train')
             valid_metrics = eval_model(self.model, valid_dataloader, type='valid')
             best_acc = max(best_acc, valid_metrics['valid_acc'])
-            
+
             if best_acc == valid_metrics['valid_acc']:
                 best_train_metrics = train_metrics
                 best_valid_metrics = valid_metrics
                 best_model = copy.deepcopy(self.model)
-            
-            progress =  (epoch+1) / num_epochs * 100
+
+            progress = (epoch + 1) / num_epochs * 100
             self.socketio.emit('training_progress', {'modelName': 'mlp', 'progress': progress})
             # print(f'Epoch [{epoch}/{num_epochs}]')
 
         best_valid_metrics.update(best_train_metrics)
-        self.socketio.emit('model_evaluation', 
-                            {'modelName': 'mlp',
+        self.socketio.emit('model_evaluation',
+                           {'modelName': 'mlp',
                             'metrics': best_valid_metrics
                             })
         # 返回best_iter模型
+        self.app.logger.info(self.model.fc3 .weight)
         return best_model
-            
-
 
     def save_model(self, model_path):
         torch.save(self.model, model_path)
