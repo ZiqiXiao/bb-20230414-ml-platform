@@ -133,7 +133,7 @@ class Model:
 
         self.app.logger.info('training started')
         # 训练模型
-        self.model.train()
+        
         best_acc = 0.0
         best_train_metrics = {}
         best_valid_metrics = {}
@@ -149,6 +149,7 @@ class Model:
         self.app.logger.info(self.model.fc3.weight)
 
         for epoch in range(num_epochs):
+            self.model.train()
             for i, (inputs, targets) in enumerate(train_dataloader):
                 # 向前传播
                 outputs = self.model(inputs)
